@@ -37,19 +37,24 @@ func getDiscordPayload(link, web string) (res model.DiscordPayload) {
 		times := page.MustElements(".job-search-card__listdate, .job-search-card__listdate--new")
 
 		listJob := []model.Job{}
-		for i := range titles {
-			title := strings.TrimSpace(titles[i].MustText())
-			company := strings.TrimSpace(companies[i].MustText())
-			link, _ := links[i].Attribute("href")
+		for index := range titles {
+			title := strings.TrimSpace(titles[index].MustText())
+			company := strings.TrimSpace(companies[index].MustText())
+			if index+1 > len(links) {
+				slog.Warn("Skip because requested index is not sync with links length", "index", index+1, "linksLength", len(links))
+				slog.Debug("But the title exist,", "title", title)
+				continue
+			}
+			link, _ := links[index].Attribute("href")
 			if link == nil {
 				slog.Warn("Link empty", "title", title)
 				continue
 			}
-			if i >= len(times) {
-				slog.Warn("Skip job: no post time found", "index", i)
+			if index >= len(times) {
+				slog.Warn("Skip job: no post time found", "index", index)
 				continue
 			}
-			postTime := strings.ToLower(strings.TrimSpace(times[i].MustText()))
+			postTime := strings.ToLower(strings.TrimSpace(times[index].MustText()))
 
 			// Skip kalau bukan postingan baru (< 24 jam)
 			if !isRecent(postTime) {
